@@ -1,36 +1,36 @@
 const puppeteer = require("puppeteer");
-const select = require ('puppeteer-select');
 const basicFunctions = require("./utility-functions/basicFunctions");
 
-//adding headless flag to false and maximizing browser height-width
+const MainDashboard = ".oppia-learner-dashboard-main-content";
+const BlogDashboard = "http://localhost:8181/blog-dashboard";
+const signInInput = "input.e2e-test-sign-in-email-input";
+const editBox = "button.e2e-test-blog-post-edit-box";
+
 puppeteer
   .launch({
     headless: false,
     args: ["--start-fullscreen", "--use-fake-ui-for-media-stream"], // giving microphone and other browser permissions
   })
   .then(async (browser) => {
-    //browser new page
     const page = await browser.newPage();
     await page.setViewport({ width: 0, height: 0 }); // for maximizing page height-width
 
-    await page.goto("http://localhost:8181/", {waitUntil: "networkidle0"});
-    await basicFunctions.clicks(page, "button.e2e-test-oppia-cookie-banner-accept-button");
-    await basicFunctions.clicks(page, "button.e2e-mobile-test-login");
-    await basicFunctions.types(page, "input.e2e-test-sign-in-email-input", "testadmin@example.com");
-    await page.evaluate(() => {
-      document.querySelector('.e2e-test-sign-in-button').click();
-    });
+    await page.goto("http://localhost:8181/");
+    await basicFunctions.clickByText(page, "button", "OK");
+    await basicFunctions.clickByText(page, "span", "Sign in");
+    await basicFunctions.types(page, signInInput, "testadmin@example.com");
+    await basicFunctions.clickByText(page, "span", "Sign In");
     
-    await page.waitForSelector(".oppia-learner-dashboard-main-content");
-    await page.goto("http://localhost:8181/blog-dashboard", {waitUntil: "networkidle0"});
+    await page.waitForSelector(MainDashboard);
+    await page.goto(BlogDashboard);
     
     // deleting a draft if present
     try{
-      await basicFunctions.clicks(page, "button.e2e-test-blog-post-edit-box");
-      await basicFunctions.clicks(page, "button.e2e-test-delete-blog-post-button", 100);
-      await basicFunctions.clicks(page, "button.e2e-test-confirm-button");
+      await basicFunctions.clicks(page, editBox); // an icon
+      await basicFunctions.clickByText(page, "span", "Delete", 100);
+      await basicFunctions.clickByText(page, "button", " Confirm ");
     } catch {
-      console.log("no blog post in drafts");
+      console.log( "no blog post in drafts");
     }
     
 
