@@ -1,50 +1,42 @@
-const puppeteer = require("puppeteer");
-const basicFunctions = require("../utility-functions/basicFunctions");
+const acceptanceTests = require("../utility-functions/puppeteer_utils.js");
+const testConstants = require("../utility-functions/testConstants.js");
 
-const MainDashboard = ".oppia-learner-dashboard-main-content";
-const signInInput = "input.e2e-test-sign-in-email-input";
-const CreatorDashboard = "http://localhost:8181/creator-dashboard";
-const translationTab = "li#tutorialTranslationTab";
-const uploadAudio = 'button.e2e-test-accessibility-translation-upload-audio';
-const audioPlay = 'button.e2e-test-play-pause-audio-button';
-const audioPause = "i.fa-pause";
 
-// currently, headless is set to false and the page viewport
-// is maximized so that it would be easy for the developers
-// to debug easily while testing.
-// We can remove these settings before merging as we have
-// to run the tests in headless mode.
-puppeteer
-  .launch({
-    headless: false,
-    args: ["--start-fullscreen", "--use-fake-ui-for-media-stream"], // giving microphone and other browser permissions
-  })
-  .then(async (browser) => {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 0, height: 0 });
-    
-    await page.goto("http://localhost:8181/");
-    await basicFunctions.clickByText(page, "button", "OK");
-    await basicFunctions.clickByText(page, "span", "Sign in");
-    await basicFunctions.types(page, signInInput, "testadmin@example.com");
-    await basicFunctions.clickByText(page, "span", "Sign In");
-    
-    await page.waitForSelector(MainDashboard);
+const translationTab = "e2e-test-translation-tab";
+const uploadAudio = 'e2e-test-accessibility-translation-upload-audio';
+const audioPlay = 'e2e-test-play-pause-audio-button';
+const audioPause = "fa-pause";
 
-    // creating a new exploration
-    await page.goto(CreatorDashboard);
-    await basicFunctions.clickByText(page, "button", " + Create Exploration ");
-    await basicFunctions.clicks(page, translationTab); // icon
 
-    // uploading the audio
-    await basicFunctions.clicks(page, uploadAudio);  // icon
-    const inputUploadHandle = await page.$('input[type=file]');
-    let fileToUpload = 'A4.mp3';
-    inputUploadHandle.uploadFile(fileToUpload);
-    await basicFunctions.clickByText(page, "button", " Save ");
-    await basicFunctions.clicks(page, audioPlay, 500);
-    await basicFunctions.clicks(page, audioPause, 1000);
 
-    console.log("Successfully played uploaded audio!");
-    await browser.close();
-  });
+async function voiceoverUploadRecording_journey() {
+  const obj = await new acceptanceTests;
+  const page = await obj.init();
+  
+  await page.goto(testConstants.URLs.home);
+  await obj.clickOn("button", "OK");
+  await obj.clickOn("span", "Sign in");
+  await obj.type(testConstants.SignInDetails.inputField, "testadmin@example.com");
+  await obj.clickOn("span", "Sign In");
+  
+  await page.waitForSelector(testConstants.Dashboard.MainDashboard);
+  
+  // creating a new exploration
+  await page.goto(testConstants.URLs.CreatorDashboard);
+  await obj.clickOn("button", " + Create Exploration ");
+  await obj.clickOn("li", translationTab); // icon
+
+  // uploading the audio
+  await obj.clickOn("button", uploadAudio);  // icon
+  const inputUploadHandle = await page.$('input[type=file]');
+  let fileToUpload = 'A4.mp3';
+  inputUploadHandle.uploadFile(fileToUpload);
+  await obj.clickOn("button", " Save ");
+  await obj.clickOn("button", audioPlay, 500);
+  await obj.clickOn("i", audioPause, 1000);
+
+  console.log("Successfully played uploaded audio!");
+  await obj.browser.close();
+};
+
+voiceoverUploadRecording_journey();

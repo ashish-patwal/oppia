@@ -1,57 +1,54 @@
-const puppeteer = require("puppeteer");
-const basicFunctions = require("./utility-functions/basicFunctions");
+const acceptanceTests = require("./utility-functions/puppeteer_utils.js");
+const testConstants = require("./utility-functions/testConstants.js");
 
-const MainDashboard = ".oppia-learner-dashboard-main-content";
-const BlogDashboard = "http://localhost:8181/blog-dashboard";
-const signInInput = "input.e2e-test-sign-in-email-input";
+
 const blogTitleInput = "input.e2e-test-blog-post-title-field";
 const blogBodyInput = "div.e2e-test-rte";
-const thumbnailPhotoBox = "div.e2e-test-photo-clickable";
+const thumbnailPhotoBox = "e2e-test-photo-clickable";
 
-// currently, headless is set to false and the page viewport
-// is maximized so that it would be easy for the developers
-// to debug easily while testing.
-// We can remove these settings before merging as we have
-// to run the tests in headless mode.
-puppeteer
-  .launch({
-    headless: false,
-    args: ["--start-fullscreen", "--use-fake-ui-for-media-stream"], // giving microphone and other browser permissions
-  })
-  .then(async (browser) => {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 0, height: 0 });
 
-    await page.goto("http://localhost:8181/");
-    await basicFunctions.clickByText(page, "button", "OK");
-    await basicFunctions.clickByText(page, "span", "Sign in");
-    await basicFunctions.types(page, signInInput, "testadmin@example.com");
-    await basicFunctions.clickByText(page, "span", "Sign In");
-    
-    await page.waitForSelector(MainDashboard);
-    await page.goto(BlogDashboard);
-    
-    // creating new blog
-    await basicFunctions.clickByText(page, "span", "NEW POST");
-    await basicFunctions.types(page, blogTitleInput, "random title");
-    await basicFunctions.types(page, blogBodyInput, "my blog body content");
 
-    // uploading thumbnail image
-    await basicFunctions.clicks(page,thumbnailPhotoBox);  // no text to click on
-    const inputUploadHandle = await page.$('input[type=file]');
-    let fileToUpload = 'collection.svg';
-    inputUploadHandle.uploadFile(fileToUpload);
-    await basicFunctions.clickByText(page, "button", " Add Thumbnail Image ");
-    await page.waitForTimeout(500);
+async function publishBlog_journey() {
+  const obj = await new acceptanceTests();
+  const page = await obj.init();
 
-    // adding tags
-    await basicFunctions.clickByText(page, "span", " International ");
-    await basicFunctions.clickByText(page, "span", " DONE ");
-    
-    // publishing blog
-    await basicFunctions.clickByText(page, "span", "PUBLISH");
-    await basicFunctions.clickByText(page, "button", " Confirm ");
+  await page.goto(testConstants.URLs.home);
+  await obj.clickOn("button", "OK");
+  await obj.clickOn("span", "Sign in");
+  await obj.type(testConstants.SignInDetails.inputField, "testadmin@example.com");
+  await obj.clickOn("span", "Sign In");
+  
+  await page.waitForSelector(testConstants.Dashboard.MainDashboard);
+  await page.goto(testConstants.URLs.BlogDashboard);
 
-    console.log("Successfully published a blog!");
-    await browser.close();
-  });
+  // creating new blog
+  try{
+    await obj.clickOn("span", "NEW POST");
+  } catch {
+    // condition when there is no blog in draft/published section.
+    await obj.clickOn("span", " CREATE NEW BLOG POST ");
+  }
+  await obj.type(blogTitleInput, "random title");
+  await obj.type(blogBodyInput, "my blog body content");
+
+  // uploading thumbnail image
+  await obj.clickOn("div", thumbnailPhotoBox);
+  const inputUploadHandle = await page.$('input[type=file]');
+  let fileToUpload = 'collection.svg';
+  inputUploadHandle.uploadFile(fileToUpload);
+  await obj.clickOn("button", " Add Thumbnail Image ");
+  await page.waitForTimeout(500);
+
+  // adding tags
+  await obj.clickOn("span", " International ");
+  await obj.clickOn("span", " DONE ");
+  
+  // publishing blog
+  await obj.clickOn("span", "PUBLISH");
+  await obj.clickOn("button", " Confirm ");
+  
+  console.log("Successfully published a blog!");
+  await obj.browser.close();
+}
+
+publishBlog_journey();
