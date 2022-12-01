@@ -1,9 +1,10 @@
 const puppeteer = require("puppeteer");
-module.exports = class acceptanceTests {
+const testConstants = require("./testConstants.js");
+module.exports = class browser {
   page;
   browser;
-  
-  async init(){
+
+  async initialize(){
     /* currently, headless is set to false and the page viewport
        is maximized so that it would be easy for the developers
        to debug easily while testing.
@@ -20,7 +21,15 @@ module.exports = class acceptanceTests {
         await (this.page).setViewport({ width: 0, height: 0 });
       });
 
-      return await this.page;
+      return this.page;
+  }
+
+  async signInWithEmail(email) {
+    await this.goto(testConstants.URLs.home);
+    await this.clickOn("button", "OK");
+    await this.clickOn("span", "Sign in");
+    await this.type(testConstants.SignInDetails.inputField, email);
+    await this.clickOn("span", "Sign In");
   }
   
   async clickOn(tag, selector, time = 0) {
@@ -46,5 +55,11 @@ module.exports = class acceptanceTests {
       await (this.page).waitForSelector(selector);
     }
     await (this.page).goto(url, {waitUntil: "networkidle0"});
+  }
+
+  async uploadFile(filePath) {
+    const inputUploadHandle = await (this.page).$('input[type=file]');
+    let fileToUpload = filePath;
+    inputUploadHandle.uploadFile(fileToUpload);
   }
 };
