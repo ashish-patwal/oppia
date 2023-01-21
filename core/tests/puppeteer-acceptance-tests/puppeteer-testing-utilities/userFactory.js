@@ -16,85 +16,92 @@
  * @fileoverview Utility File for declaring and initializing users.
  */
 
-const e2eSuperAdmin = require('./blogPostAdminUtils.js');
-const e2eBlogAdmin = require('./blogPostAdminUtils.js');
-const e2eBlogPostEditor = require('./blogPostAdminUtils.js');
-const e2eGuestUser = require('./blogPostAdminUtils.js');
+const superAdminUtilsUser = require("./superAdminUtils");
+const blogPostAdminUtilsUser = require("./blogPostAdminUtils");
 
-let superAdminInstance = null, blogAdminInstance = null,
-  blogPostEditorInstance = null;
-const ROLE_BLOG_ADMIN = 'blog admin';
-const ROLE_BLOG_POST_EDITOR = 'blog post editor';
+let superAdminInstance = blogAdminInstance = blogPostEditorInstance = null;
 let browserInstances = [];
 
-let createNewSuperAdmin = async function(username) {
+const ROLE_BLOG_ADMIN = "blog admin";
+const ROLE_BLOG_POST_EDITOR = "blog post editor";
+
+let createNewSuperAdmin = async function (username) {
   if (superAdminInstance !== null) {
     return superAdminInstance;
   }
 
-  const superAdmin = await new e2eSuperAdmin();
+  const superAdmin = new superAdminUtilsUser();
   await superAdmin.openBrowser();
-  await superAdmin.signUpNewUser(username, 'testadmin@example.com');
 
-  await browserInstances.push(superAdmin);
-  return superAdminInstance = superAdmin;
+  browserInstances.push(superAdmin);
+  return (superAdminInstance = superAdmin);
 };
 
-let createNewBlogAdmin = async function(username) {
+let createNewBlogAdmin = async function (username) {
   if (blogAdminInstance !== null) {
     return blogAdminInstance;
   }
 
   if (superAdminInstance === null) {
-    superAdminInstance = await createNewSuperAdmin('superAdm');
+    superAdminInstance = await createNewSuperAdmin("superAdm");
   }
-  const blogAdmin = await new e2eBlogAdmin();
+
+  const blogAdmin = new blogPostAdminUtilsUser();
   await blogAdmin.openBrowser();
-  await blogAdmin.signUpNewUser(username, 'blog_admin@example.com');
+  await blogAdmin.signUpNewUser(username, "blog_admin@example.com");
 
   await superAdminInstance.assignRoleToUser(username, ROLE_BLOG_ADMIN);
   await superAdminInstance.expectUserToHaveRole(username, ROLE_BLOG_ADMIN);
 
-  await browserInstances.push(blogAdmin);
-  return blogAdminInstance = blogAdmin;
+  browserInstances.push(blogAdmin);
+  return (blogAdminInstance = blogAdmin);
 };
 
-let createNewBlogPostEditor = async function(username) {
+let createNewBlogPostEditor = async function (username) {
   if (blogPostEditorInstance !== null) {
     return blogPostEditorInstance;
   }
 
   if (blogAdminInstance === null) {
-    blogAdminInstance = await createNewBlogAdmin('blogAdm');
+    blogAdminInstance = await createNewBlogAdmin("blogAdm");
   }
-  const blogPostEditor = await new e2eBlogPostEditor();
+
+  const blogPostEditor = new blogPostAdminUtilsUser();
   await blogPostEditor.openBrowser();
-  await blogPostEditor.signUpNewUser(
-    username, 'blog_post_editor@example.com');
+  await blogPostEditor.signUpNewUser(username, "blog_post_editor@example.com");
 
   await blogAdminInstance.assignUserToRoleFromBlogAdminPage(
-    'blogPostEditor', 'BLOG_POST_EDITOR');
+    "blogPostEditor",
+    "BLOG_POST_EDITOR"
+  );
   await superAdminInstance.expectUserToHaveRole(
-    'blogPostEditor', ROLE_BLOG_POST_EDITOR);
+    "blogPostEditor",
+    ROLE_BLOG_POST_EDITOR
+  );
 
-  await browserInstances.push(blogPostEditor);
-  return blogPostEditorInstance = blogPostEditor;
+  browserInstances.push(blogPostEditor);
+  return (blogPostEditorInstance = blogPostEditor);
 };
 
-let createNewGuestUser = async function(username, email) {
-  const guestUser = await new e2eGuestUser();
+let createNewGuestUser = async function (username, email) {
+  const guestUser = new blogPostAdminUtilsUser();
   await guestUser.openBrowser();
   await guestUser.signUpNewUser(username, email);
 
-  await browserInstances.push(guestUser);
+  browserInstances.push(guestUser);
   return guestUser;
 };
 
-let closeAllBrowsers = async function() {
+let closeAllBrowsers = async function () {
   for (let i = 0; i < browserInstances.length; i++) {
     await browserInstances[i].closeBrowser();
   }
 };
 
-module.exports = { createNewSuperAdmin, createNewBlogAdmin,
-  createNewBlogPostEditor, createNewGuestUser, closeAllBrowsers };
+module.exports = {
+  createNewSuperAdmin,
+  createNewBlogAdmin,
+  createNewBlogPostEditor,
+  createNewGuestUser,
+  closeAllBrowsers,
+};
